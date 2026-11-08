@@ -20,11 +20,13 @@ public class TransactionTests
     [Fact]
     public void BuyBtc_WithInsufficientBrl_ShouldThrowInvalidOperationException()
     {
-        
+        // Arrange
         var wallet = new Wallet(1000m, 0.0m);
         decimal btcQuote = 500000m;
+        decimal amountBtcToBuy = 0.1m; // Declarado aqui também
 
-        Assert.Throws<InvalidOperationException>(() => wallet.BuyBtc(0.1m, btcQuote));
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => wallet.BuyBtc(amountBtcToBuy, btcQuote));
     }
 
     [Fact]
