@@ -1,5 +1,6 @@
 using Xunit;
 using MiniBitcoin.Console.Entities;
+using System.Linq;
 
 namespace MiniBitcoin.Tests;
 

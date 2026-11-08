@@ -1,9 +1,15 @@
+using System;
+using System.Collections.Generic;
+
 namespace MiniBitcoin.Console.Entities;
 
 public class Wallet
 {
     public decimal BalanceBrl { get; private set; }
     public decimal BalanceBtc { get; private set; }
+    
+    private readonly List<TransactionRecord> _transactions = new();
+    public IReadOnlyCollection<TransactionRecord> Transactions => _transactions.AsReadOnly();
 
     public Wallet(decimal initialBrl, decimal initialBtc)
     {
@@ -48,24 +54,39 @@ public class Wallet
         if (btcQuote <= 0) throw new ArgumentException("A cotação do Bitcoin deve ser maior que zero.");
 
         decimal totalCostBrl = amountBtc * btcQuote;
+
         if (totalCostBrl > BalanceBrl)
         {
             throw new InvalidOperationException("Saldo em BRL insuficiente para realizar a compra.");
         }
 
-        BalanceBrl -= totalCostBrl; //Subtrai
-        BalanceBtc += amountBtc;    //Adiciona
+        BalanceBrl -= totalCostBrl;
+        BalanceBtc += amountBtc;
+
+        _transactions.Add(new TransactionRecord(TransactionType.Buy, amountBtc, btcQuote));
     }
 
-    public void SellBtc(decimal btcAmount, decimal btcPrice)
+    public void SellBtc(decimal amountBtc, decimal btcQuote)
     {
-        if (btcAmount <= 0) throw new ArgumentException("O valor em BTC deve ser maior que zero.");
-        if (btcPrice <= 0) throw new ArgumentException("O preço do BTC deve ser maior que zero.");
-        if (btcAmount > BalanceBtc) throw new InvalidOperationException("Saldo em BTC insuficiente para vender.");
+        if (amountBtc <= 0) throw new ArgumentException("A quantidade de BTC deve ser maior que zero.");
+        if (btcQuote <= 0) throw new ArgumentException("A cotação do Bitcoin deve ser maior que zero.");
 
-        decimal brlToReceive = btcAmount * btcPrice;
-        DebitBtc(btcAmount);
-        CreditBrl(brlToReceive);
+        if (amountBtc > BalanceBtc)
+        {
+            throw new InvalidOperationException("Saldo em Bitcoin insuficiente para realizar a venda.");
+        }
+
+        decimal totalRevenueBrl = amountBtc * btcQuote;
+
+        BalanceBtc -= amountBtc;
+        BalanceBrl += totalRevenueBrl;
+
+        _transactions.Add(new TransactionRecord(TransactionType.Sell, amountBtc, btcQuote));
     }
 
+    public decimal GetTotalPortfolioValue(decimal currentBtcQuote)
+    {
+        if (currentBtcQuote < 0) throw new ArgumentException("A cotação não pode ser negativa.");
+        return BalanceBrl + (BalanceBtc * currentBtcQuote);
+    }
 }
